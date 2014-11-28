@@ -1,38 +1,19 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
 #include "server.h"
-#include "commande.h"
-#include "jvie.h"
-
-static void init(void)
-{
-#ifdef WIN32
-    WSDATA wsa;
-    int err = WSAStartup(MAKEWORD(2, 2), &wsa);
-    if(err < 0)
-    {
-	puts("WSAStartup failed !");
-	exit(EXIT_FAILURE);
-    }
-#endif
-}
-
-static void end(void)
-{
-#ifdef WIN32
-    WSACleanup();
-#endif
-}
 
 static void app(void)
 {
     SOCKET sock = init_connection();
-    char buffer[BUF_SIZE];
     int actual = 0;
     int max = sock;
     Client clients[MAX_CLIENTS];
+    
+    /* Initialiser la plateau de jeu de la vie
+     * et son plateau d'etats
+     */
+    
+    Plateau* p_vie = jv_newPlat(GAME_SIZE, GAME_SIZE);
+    Plateau* p_vie_next = jv_newPlat(GAME_SIZE, GAME_SIZE);
+    PlateauStatut* p_statuts = jvs_newPlat(GAME_SIZE, GAME_SIZE);
 
     fd_set rdfs;
     while(1)
@@ -113,12 +94,45 @@ static void app(void)
 		    {
 			switch(cmd.type)
 			{
-			    /* Demande une tache */
+				Command com;
+			    /* CLient demande une tache */
 			    case CMD_REQUEST_TASK:
-
+			    	com.type = CMD_TASK;
+			    	
+			    	/* TODO verifier si le process n'est pas déja sur un block non traité ou en traitement */
+			    	
+			    	Block b = jvs_getBlock(p_statuts, BLOCK_SIZE, BLOCK_SIZE);
+			    	if (b.x == -1)
+			    	{
+			    		/* erreur, aucun block libre */
+			    		/* TODO envoyer commande attente */
+			    		break;
+			    	}
+			    	
+			    	/* pack cellules
+			    	 * Envoyer
+			    	 * Liberer memoire
+			    	 * Assigner
+			    	 */
+			    	 /* pack des cellules */
+			    	 char* pack;
+			    	 jv_packCells(p_vie, pack, b.x, b.y, b.width, b.height);
+			    	 
+			    	 /* Construction et envoi de la commande */
+			    	 com.task.width = b.width;
+			    	 com.task.height = b.height;
+			    	 com.task.cells = pack;
+			    	 writeCmd(clients[i].sock, &com);
+			    	 free(pack);
+			    	 
+			    	 /* Assigne le block au client */
+			    	 jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
+			    	 clients[i].generation = p_statuts->generation;
+			    	 clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
+			    	
 				break;
 
-			    /* Envoi un resultat */
+			    /* Client envoi un resultat */
 			    case CMD_TASK:
 
 				break;
@@ -189,8 +203,6 @@ static void end_connection(int sock)
 
 int main(int argc, char **argv)
 {
-    init();
     app();
-    end();
     return EXIT_SUCCESS;
 }

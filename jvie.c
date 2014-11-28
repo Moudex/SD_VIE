@@ -79,3 +79,13 @@ void jv_nextGen2(int width, int height, char* cells)
 
     jv_freePlat(p);
 }
+
+void jv_packCells(plateau* p, char* pack, int x, int y, int width, int height)
+{
+	pack = (char*)malloc(sizeof(char)*width*height);
+	int i,j;
+	for (i=x; i<x+width; i++)
+	for (j=y; j<y+height; j++)
+		pack[i+j] = p->grille[i][j];
+	return pack;
+}

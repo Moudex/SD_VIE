@@ -20,8 +20,7 @@ plateau* jv_newPlat(int width, int height);
 void jv_freePlat(plateau *p);
 plateau* jv_nextGen(plateau* p);
 void jv_nextGen2(int width, int height, char* cells);
-int jv_append(plateau *p, char *c);
-void jv_sort(plateau *p);
+void jv_packCells(plateau* p, char* pack, int x, int y, int width, int height);
 
 
 #endif

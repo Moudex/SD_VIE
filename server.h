@@ -1,20 +1,20 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#ifdef WIN32
-
-#include <winsock2.h>
-#define errno WSAGetLastError()
-#define close(s) closesocket(s)
-
-#elif defined (linux)
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
+#include "commande.h"
+#include "jvie.h"
+#include "jvie_serv.h"
+
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
 typedef int SOCKET;
@@ -22,16 +22,11 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
-#else
-
-#error not defined for this platform
-
-#endif
-
 #define CRLF "\r\n"
 #define PORT 2014
 #define MAX_CLIENTS 100
-#define BUF_SIZE 1024
+#define BLOCK_SIZE 4
+#define GAME_SIZE 64
 
 typedef struct
 {
@@ -43,8 +38,6 @@ typedef struct
     int height;
 }Client;
 
-static void init(void);
-static void end(void);
 static void app(void);
 static int init_connection(void);
 static void end_connection(int sock);

@@ -33,10 +33,18 @@ void jvs_init(PlateauStatut* statuts, int width, int height)
 	    statuts->grille[i][j].statut = A_TRAITER;
 }
 
+PlateauStatut* jvs_newPlat(int width, int height)
+{
+	PlateauStatut* statuts = (PlateauStatut*)malloc(sizeof(PlateauStatut));
+	jvs_init(statuts, width, height);
+	return statuts;
+}
+
 void jvs_delete(PlateauStatut* statuts)
 {
     free(statuts->grille[0]);
     free(statuts->grille);
+    free(statuts);
 }
 
 int jvs_assigne(PlateauStatut* statuts, int x, int y, int width, int height, SOCKET client)
@@ -91,4 +99,65 @@ int jvs_nextGen(PlateauStatut* statuts)
 	    statuts->grille[i][j].statut = A_TRAITER;
     statuts->generation ++;
     return statuts->generation;
+}
+
+/* retourne le premier block libre de taille width height */
+Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
+{
+	int i,j;
+	if (width < 1 && height < 1)
+	{
+	for (i=0; i<statuts->width-width; i++)
+		for (j=0; j<statuts->height-height; j++)
+		{
+			/* teste ce motif */
+			int libre=1;
+			int k=i;
+			while (libre && k<i+width)
+			{
+				int l=j;
+				while (libre && l<j+height)
+				{
+					if (statuts->grille[k][l].statut != A_TRAITER)
+						libre = 0;
+					l++;
+				}
+				k++;
+			}
+			
+			/* Si on a trouvé un block */
+			if (libre)
+			{
+				Block b;
+				b.x = i;
+				b.y = j;
+				b.width = width;
+				b.height = height;
+				return b;
+			}
+		}
+	}
+	else if (width ==1 && height == 1)
+	{
+	/* Sinon on retourne le premier block 1X1 dispo */
+	for (i=0; i<statuts->width; i++)
+		for (j=0; j<height; j++)
+			if (statuts->grille[i][j].statut == A_TRAITER)
+			{
+				Block b;
+				b.x = i;
+				b.y = j;
+				b.width = 1;
+				b.height = 1;
+				return b;	
+			}
+	}
+	
+	/* Aucun block de dispo */
+	Block b;
+	b.x = -1;
+	b.y = -1;
+	b.width = -1;
+	b.height = -1;
+	return b;
 }
