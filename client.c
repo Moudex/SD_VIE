@@ -1,26 +1,4 @@
 #include "client.h"
-#include "jvie.h"
-#include "commande.h"
-
-static void init(void)
-{
-#ifdef WIN32
-    WSADATA wsa;
-    int err = WSAStartup(MAKEWORD(2, 2), &wsa);
-    if(err<0)
-    {
-	puts("WSAStartup failed !");
-	exit(EXIT_FAILURE);
-    }
-#endif
-}
-
-static void end(void)
-{
-#ifdef WIN32
-    WSACleanup();
-#endif
-}
 
 static void app(const char *address)
 {
@@ -28,7 +6,7 @@ static void app(const char *address)
     fd_set rdfs;
     etat_c et = ENVOYE;
 
-    /* A changer avec cmdStartCom */
+    /* Envoi de la commande pour démarrer communication */
     Command* c  = (Command*)malloc(sizeof(Command));
     c->type = CMD_START_COMMUNICATION;
     int start = writeCmd(sock, c);
@@ -45,9 +23,10 @@ static void app(const char *address)
 		exit(errno);
 	    }
 	    
-	    /* Demander un calcul */
+	    /* Si calcul envoye, on en demande un autre */
 	    if (et == ENVOYE)
 	    {
+
 		Command* cmd = (Command*)malloc(sizeof(Command));
 		cmd->type = CMD_REQUEST_TASK;
 		int n = writeCmd(sock, cmd);
@@ -55,7 +34,7 @@ static void app(const char *address)
 		free(cmd);
 	    }
 
-	    /* Recois un calcul */
+	    /* Recois une commande */
 	    else if (et == DEMANDE && FD_ISSET(sock, &rdfs))
 	    {
 		Command* cmd = (Command*)malloc(sizeof(Command));
@@ -76,22 +55,27 @@ static void app(const char *address)
 		/* recois calculs, le fait et l'envoi */
 		else if (cmd->type == CMD_TASK)
 		{
-		    jv_nextGen2(cmd->task.width, cmd->task.height, cmd->task.cells);
+		    plateau* p = jv_unpack_c(cmd->task.cells, cmd->task.width, cmd->task.height);
+		    jv_nextGen(p);
+		    jv_pack_c(p, cmd->task.cells);
 		    writeCmd(sock, cmd);
+		    free(cmd->task.cells);
 		    et = ENVOYE;
 		}
 
+		/* Sinon on redemande un autre calcul */
 		else 
 		{
 		    et = ENVOYE;
 		}
-
+		free(cmd);
 	    }
 	}
 
-    /* ajouter cmdEndCom */
+    /* Envoi de la commande de terminaison de communication */
     c->type = CMD_END_COMMUNICATION;
     writeCmd(sock, c);
+    free(c);
     end_connection(sock);
 }
 
@@ -139,8 +123,7 @@ int main(int argc, char **argv)
 	return EXIT_FAILURE;
     }
 
-    init();
     app(argv[1]);
-    end();
+
     return EXIT_SUCCESS;
 }

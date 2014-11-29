@@ -94,7 +94,7 @@ static void app(void)
 		    {
 			switch(cmd.type)
 			{
-				Command com;
+			    Command com;
 			    /* CLient demande une tache */
 			    case CMD_REQUEST_TASK:
 			    	com.type = CMD_TASK;
@@ -115,16 +115,14 @@ static void app(void)
 			    	 * Assigner
 			    	 */
 			    	 /* pack des cellules */
-			    	 char* pack;
-			    	 jv_packCells(p_vie, pack, b.x, b.y, b.width, b.height);
-			    	 
+				 char* pack = jv_pack_s(p_vie, b.x, b.y, b.width+2, b.height+2);
 			    	 /* Construction et envoi de la commande */
-			    	 com.task.width = b.width;
-			    	 com.task.height = b.height;
+			    	 com.task.width = b.width+2;
+			    	 com.task.height = b.height+2;
 			    	 com.task.cells = pack;
 			    	 writeCmd(clients[i].sock, &com);
 			    	 free(pack);
-			    	 
+			    	 /* TODO verifier que l'envoi s'est bien passer avant d'assigner les blocks */
 			    	 /* Assigne le block au client */
 			    	 jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
 			    	 clients[i].generation = p_statuts->generation;
@@ -134,6 +132,19 @@ static void app(void)
 
 			    /* Client envoi un resultat */
 			    case CMD_TASK:
+				/* Recevoir les cellules
+				 * verifier la génération
+				 * Les insérer dans le tableau next gen
+				 * libérer l'etat du block
+				 */
+				if (clients[i].generation != p_statuts->generation)
+				{
+				    /* TODO enlever le client */
+				}
+				
+				jv_unpack_s(p_vie_next, cmd.task.cells, clients[i].x, clients[i].y, cmd.task.width, cmd.task.height);
+				free(cmd.task.cells);
+				jvs_termine(p_statuts, clients[i].x, clients[i].y, clients[i].width, clients[i].height);
 
 				break;
 
@@ -145,6 +156,9 @@ static void app(void)
 		}
 	    }
 	}
+
+	/* TODO verifier changement generations */
+
     }
     clear_clients(clients, actual);
     end_connection(sock);

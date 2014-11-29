@@ -7,13 +7,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef WIN32
+#include "jvie.h"
+#include "commande.h"
 
-#include <winsock2.h>
-#define errno WSAGetLastError()
-#define close(s) closesocket(s)
-
-#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -28,8 +24,6 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 typedef struct in_addr IN_ADDR;
 
-#endif
-
 #define CRLF "\r\n"
 #define PORT 2014
 #define BUF_SIZE 1024
@@ -37,8 +31,6 @@ typedef struct in_addr IN_ADDR;
 typedef enum etat_c etat_c;
 enum etat_c { DEMANDE, ENVOYE, RECU };
 
-static void init(void);
-static void end(void);
 static void app(const char *address);
 static int init_connection(const char *address);
 static void end_connection(int sock);
