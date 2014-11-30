@@ -11,10 +11,9 @@ static void app(const char *address)
     c->type = CMD_START_COMMUNICATION;
     int start = writeCmd(sock, c);
 
-	while(start)
+	while(1)
 	{
 	    FD_ZERO(&rdfs);
-	    FD_SET(STDIN_FILENO, &rdfs);
 	    FD_SET(sock, &rdfs);
 
 	    if(select(sock + 1, &rdfs, NULL, NULL, NULL) == -1)
@@ -22,11 +21,10 @@ static void app(const char *address)
 		perror("select()");
 		exit(errno);
 	    }
-	    
 	    /* Si calcul envoye, on en demande un autre */
 	    if (et == ENVOYE)
 	    {
-
+		printf("Demande d un calcul\n");
 		Command* cmd = (Command*)malloc(sizeof(Command));
 		cmd->type = CMD_REQUEST_TASK;
 		int n = writeCmd(sock, cmd);
@@ -37,6 +35,7 @@ static void app(const char *address)
 	    /* Recois une commande */
 	    else if (et == DEMANDE && FD_ISSET(sock, &rdfs))
 	    {
+		printf("Recois commande\n");
 		Command* cmd = (Command*)malloc(sizeof(Command));
 		int n = readCmd(sock, cmd);
 		if (n == 0)
@@ -48,6 +47,7 @@ static void app(const char *address)
 		/* recois ordre d'attente */
 		if (cmd->type == CMD_NO_TASK)
 		{
+		    printf("Recois attente\n");
 		    sleep(cmd->noTask.waitingTime);
 		    et = ENVOYE;
 		}
@@ -55,10 +55,12 @@ static void app(const char *address)
 		/* recois calculs, le fait et l'envoi */
 		else if (cmd->type == CMD_TASK)
 		{
+		    printf("recois calcul\n");
 		    plateau* p = jv_unpack_c(cmd->task.cells, cmd->task.width, cmd->task.height);
 		    jv_nextGen(p);
 		    jv_pack_c(p, cmd->task.cells);
 		    writeCmd(sock, cmd);
+		    printf("Calcul envoye\n");
 		    free(cmd->task.cells);
 		    et = ENVOYE;
 		}
@@ -66,6 +68,9 @@ static void app(const char *address)
 		/* Sinon on redemande un autre calcul */
 		else 
 		{
+		    Command* q;
+		    readCmd(sock, q);
+		    printf("redemande un calcul\n");
 		    et = ENVOYE;
 		}
 		free(cmd);

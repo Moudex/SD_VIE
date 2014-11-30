@@ -11,8 +11,8 @@ static void app(void)
      * et son plateau d'etats
      */
     
-    Plateau* p_vie = jv_newPlat(GAME_SIZE, GAME_SIZE);
-    Plateau* p_vie_next = jv_newPlat(GAME_SIZE, GAME_SIZE);
+    plateau* p_vie = jv_newPlat(GAME_SIZE, GAME_SIZE);
+    plateau* p_vie_next = jv_newPlat(GAME_SIZE, GAME_SIZE);
     PlateauStatut* p_statuts = jvs_newPlat(GAME_SIZE, GAME_SIZE);
 
     fd_set rdfs;
@@ -61,6 +61,7 @@ static void app(void)
 		continue;
 	    }
 
+	    writeCmd(csock, &cmd);
 	    max = csock > max ? csock : max;
 
 	    FD_SET(csock, &rdfs);
@@ -73,6 +74,7 @@ static void app(void)
 	    c.height = -1;
 	    clients[actual] = c;
 	    actual ++;
+	     printf("nouveau client %d\n", actual);
 	}
 	else
 	{
@@ -101,32 +103,34 @@ static void app(void)
 			    	
 			    	/* TODO verifier si le process n'est pas déja sur un block non traité ou en traitement */
 			    	
+				printf("%d demande un calcul\n", i);
+
 			    	Block b = jvs_getBlock(p_statuts, BLOCK_SIZE, BLOCK_SIZE);
 			    	if (b.x == -1)
 			    	{
 			    		/* erreur, aucun block libre */
 			    		/* TODO envoyer commande attente */
+					Command att;
+					att.type = CMD_NO_TASK;
+					att.noTask.waitingTime = 50.0;
+					writeCmd(clients[i].sock, &att);
 			    		break;
 			    	}
 			    	
-			    	/* pack cellules
-			    	 * Envoyer
-			    	 * Liberer memoire
-			    	 * Assigner
-			    	 */
 			    	 /* pack des cellules */
 				 char* pack = jv_pack_s(p_vie, b.x, b.y, b.width+2, b.height+2);
 			    	 /* Construction et envoi de la commande */
 			    	 com.task.width = b.width+2;
 			    	 com.task.height = b.height+2;
 			    	 com.task.cells = pack;
-			    	 writeCmd(clients[i].sock, &com);
+			    	 if (writeCmd(clients[i].sock, &com)>0)
+				 {
+				    /* Assigne le block au client */
+				   jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
+				   clients[i].generation = p_statuts->generation;
+				   clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
+				 }
 			    	 free(pack);
-			    	 /* TODO verifier que l'envoi s'est bien passer avant d'assigner les blocks */
-			    	 /* Assigne le block au client */
-			    	 jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
-			    	 clients[i].generation = p_statuts->generation;
-			    	 clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
 			    	
 				break;
 
@@ -139,16 +143,20 @@ static void app(void)
 				 */
 				if (clients[i].generation != p_statuts->generation)
 				{
-				    /* TODO enlever le client */
+				    /* enlever le client */
+				    close(clients[i].sock);
+				    remove_client(clients, i, &actual);
 				}
 				
 				jv_unpack_s(p_vie_next, cmd.task.cells, clients[i].x, clients[i].y, cmd.task.width, cmd.task.height);
 				free(cmd.task.cells);
 				jvs_termine(p_statuts, clients[i].x, clients[i].y, clients[i].width, clients[i].height);
 
+				printf("%d a termine son calcul avec succes\n", i);
 				break;
 
 			    default:
+				break;
 
 			}
 		    }
@@ -157,7 +165,11 @@ static void app(void)
 	    }
 	}
 
-	/* TODO verifier changement generations */
+	/* verifier changement generations */
+	if (jvs_nextGen(p_statuts) != -1)
+	{
+	    p_vie = p_vie_next;
+	}
 
     }
     clear_clients(clients, actual);

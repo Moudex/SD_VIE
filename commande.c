@@ -25,7 +25,7 @@ int readCmd(int socket, Command* cmd)
 	    {
 		int n2 = read(socket, &(cmd->task), sizeof(CmdTask) - sizeof(char*));
 		if (n2 <= 0) return -1;
-		const CSIZ = cmd->task.width * cmd->task.height;
+		const int CSIZ = cmd->task.width * cmd->task.height;
 		cmd->task.cells = (char*)malloc(CSIZ * sizeof(char));
 		for (int i = 0; i < CSIZ; i++)
 		{
