@@ -29,7 +29,7 @@ typedef struct in_addr IN_ADDR;
 #define BUF_SIZE 1024
 
 typedef enum etat_c etat_c;
-enum etat_c { DEMANDE, ENVOYE, RECU };
+enum etat_c { DEMANDE, ENVOYE, RECU, REFU };
 
 static void app(const char *address);
 static int init_connection(const char *address);

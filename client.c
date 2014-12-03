@@ -4,23 +4,19 @@ static void app(const char *address)
 {
     SOCKET sock = init_connection(address);
     fd_set rdfs;
-    etat_c et = ENVOYE;
+    etat_c et = REFU;
 
     /* Envoi de la commande pour démarrer communication */
     Command* c  = (Command*)malloc(sizeof(Command));
     c->type = CMD_START_COMMUNICATION;
     int start = writeCmd(sock, c);
+    printf("Envoi debuti\n");
 
 	while(1)
 	{
 	    FD_ZERO(&rdfs);
 	    FD_SET(sock, &rdfs);
 
-	    if(select(sock + 1, &rdfs, NULL, NULL, NULL) == -1)
-	    {
-		perror("select()");
-		exit(errno);
-	    }
 	    /* Si calcul envoye, on en demande un autre */
 	    if (et == ENVOYE)
 	    {
@@ -31,6 +27,23 @@ static void app(const char *address)
 		if (n > 0) et = DEMANDE;
 		free(cmd);
 	    }
+
+	    if(select(sock + 1, &rdfs, NULL, NULL, NULL) == -1)
+	    {
+		perror("select()");
+		exit(errno);
+	    }
+
+	    /* Si pas encore accepte */
+	    if (et == REFU)
+	    {
+		Command cmd;
+		readCmd(sock, &cmd);
+		if (cmd.type == CMD_START_COMMUNICATION)
+		    et = ENVOYE;
+		printf("Recoi debut\n");
+	    }
+
 
 	    /* Recois une commande */
 	    else if (et == DEMANDE && FD_ISSET(sock, &rdfs))
@@ -58,20 +71,21 @@ static void app(const char *address)
 		    printf("recois calcul\n");
 		    plateau* p = jv_unpack_c(cmd->task.cells, cmd->task.width, cmd->task.height);
 		    jv_nextGen(p);
-		    jv_pack_c(p, cmd->task.cells);
+		    char* coucou = (char*)malloc(sizeof(char)*cmd->task.width*cmd->task.height);
+		    jv_pack_c(p, coucou);
+		    free(cmd->task.cells);
+		    cmd->task.cells = coucou;
 		    writeCmd(sock, cmd);
 		    printf("Calcul envoye\n");
 		    free(cmd->task.cells);
 		    et = ENVOYE;
 		}
 
-		/* Sinon on redemande un autre calcul */
 		else 
 		{
-		    Command* q;
-		    readCmd(sock, q);
-		    printf("redemande un calcul\n");
-		    et = ENVOYE;
+		    Command q;
+		    readCmd(sock, &q);
+		    printf("erreur cmd %d\n", q.type);
 		}
 		free(cmd);
 	    }
@@ -122,13 +136,13 @@ static void end_connection(int sock)
 
 int main(int argc, char **argv)
 {
-    if(argc<2)
+    /*if(argc<2)
     {
 	printf("Usage : %s [address]\n", argv[0]);
 	return EXIT_FAILURE;
     }
 
     app(argv[1]);
-
+*/ app("127.0.0.1");
     return EXIT_SUCCESS;
 }

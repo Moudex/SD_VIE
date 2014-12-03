@@ -60,8 +60,10 @@ static void app(void)
 	    {
 		continue;
 	    }
-
+	    
+	    printf("Recois debut\n");
 	    writeCmd(csock, &cmd);
+	    printf("Envoi debut\n");
 	    max = csock > max ? csock : max;
 
 	    FD_SET(csock, &rdfs);
@@ -74,7 +76,6 @@ static void app(void)
 	    c.height = -1;
 	    clients[actual] = c;
 	    actual ++;
-	     printf("nouveau client %d\n", actual);
 	}
 	else
 	{
@@ -103,7 +104,7 @@ static void app(void)
 			    	
 			    	/* TODO verifier si le process n'est pas déja sur un block non traité ou en traitement */
 			    	
-				printf("%d demande un calcul\n", i);
+				//printf("%d demande un calcul\n", i);
 
 			    	Block b = jvs_getBlock(p_statuts, BLOCK_SIZE, BLOCK_SIZE);
 			    	if (b.x == -1)
@@ -125,6 +126,7 @@ static void app(void)
 			    	 com.task.cells = pack;
 			    	 if (writeCmd(clients[i].sock, &com)>0)
 				 {
+				     //printf("Calcul envoye\n");
 				    /* Assigne le block au client */
 				   jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
 				   clients[i].generation = p_statuts->generation;
@@ -149,10 +151,9 @@ static void app(void)
 				}
 				
 				jv_unpack_s(p_vie_next, cmd.task.cells, clients[i].x, clients[i].y, cmd.task.width, cmd.task.height);
-				free(cmd.task.cells);
 				jvs_termine(p_statuts, clients[i].x, clients[i].y, clients[i].width, clients[i].height);
 
-				printf("%d a termine son calcul avec succes\n", i);
+				//printf("%d a termine son calcul avec succes\n", i);
 				break;
 
 			    default:
@@ -168,6 +169,7 @@ static void app(void)
 	/* verifier changement generations */
 	if (jvs_nextGen(p_statuts) != -1)
 	{
+	    printf("Generation suivante\n");
 	    p_vie = p_vie_next;
 	}
 

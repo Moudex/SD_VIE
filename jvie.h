@@ -33,6 +33,8 @@ void jv_freePlat(plateau *p);
 /* calcule la generation suivante du plateau */
 void jv_nextGen(plateau* p);
 
+/* Clone un plateau */
+plateau* clone(plateau* p);
 
 /* Compacte une portion de plateau pour l'envoi avec bordure supplémentaire*/
 char* jv_pack_s(plateau* p, int x, int y, int width, int height);

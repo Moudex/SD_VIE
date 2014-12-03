@@ -82,7 +82,7 @@ int jvs_termine(PlateauStatut* statuts, int x, int y, int width, int height)
 {
     int i,j;
     for (i=x; i<x+width; i++)
-	for (j=y; j<y+height; y++)
+	for (j=y; j<y+height; j++)
 	    statuts->grille[i][j].statut = TRAITEE;
     return 0;
 }

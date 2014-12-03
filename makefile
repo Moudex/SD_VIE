@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-W -Wall -std=c99
+CFLAGS=-W -Wall -std=c99 -g
 LDFLAGS=
 EXEC=client server
 

@@ -76,18 +76,29 @@ void jv_freePlat(plateau *p)
     free(p->grille);
 }
 
+/* Clone un plateau */
+plateau* clone(plateau* p)
+{
+    plateau* c = jv_newPlat(p->width, p->height);
+    int i,j;
+    for (i=0; i<p->width; i++)
+	for (j=0; j<p->height; j++)
+	    c->grille[i][j] = p->grille[i][j];
+    return c;
+}
+
 /* calcule la generation suivante du plateau */
 void jv_nextGen(plateau* p)
 {
     if (p==NULL)
 	return;
-    plateau* ngen = jv_newPlat(p->width, p->height);
+    plateau* tmp = clone(p);
+
     int i,j;
-    for (i = 0; i < ngen->width; i++)
-	for (j = 0; j < ngen->height; j++)
-	    ngen->grille[i][j] = jv_getEtatSuivant(i, j, p);
-    jv_freePlat(p);
-    p = ngen;
+    for (i = 0; i < p->width; i++)
+	for (j = 0; j < p->height; j++)
+	    p->grille[i][j] = jv_getEtatSuivant(i, j, tmp);
+    jv_freePlat(tmp);
 }
 
 /* Compacte une portion de plateau pour l'envoi avec bordure supplémentaire*/
@@ -104,9 +115,9 @@ char* jv_pack_s(plateau* p, int x, int y, int width, int height)
 	for (j=0; j<height; j++)
 	{
 	    if (jv_posValide(p_x+i,p_y+j,p))
-		pack[i*j] = p->grille[p_x+i][p_y+j];
+		pack[i*height+j] = p->grille[p_x+i][p_y+j];
 	    else
-		pack[i*j] = 0;
+		pack[i*height+j] = 0;
 	}
     return pack;
 }
@@ -117,7 +128,7 @@ void jv_pack_c(plateau* p, char* pack)
     int i,j;
     for (i=0; i<p->width; i++)
 	for (j=0; j<p->height; j++)
-	    pack[i*j] = p->grille[i][j];
+	    pack[i*p->height+j] = p->grille[i][j];
     free(p);
 }
 
@@ -131,7 +142,7 @@ void jv_unpack_s(plateau* p, char* pack, int x, int y, int width, int height)
     for (i=0; i<width; i++)
 	for (j=0; j<height; j++)
 	    if (i>0 && i< width-1 && j>0 && j<height-1)
-		p->grille[i+x-1][j+y-1] = pack[i*j];
+		p->grille[i+x-1][j+y-1] = pack[i*height+j];
     free(pack);
 }
 
@@ -145,6 +156,6 @@ plateau* jv_unpack_c(char* pack, int width, int height)
     int i,j;
     for (i=0; i<width; i++)
 	for (j=0; j<height; j++)
-	    p->grille[i][j] = pack[i*j];
+	    p->grille[i][j] = pack[i*height+j];
     return p;
 }
