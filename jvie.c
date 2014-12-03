@@ -18,7 +18,7 @@ int jv_getVoisines(int x, int y, plateau* p)
 	for (j=-1; j<=1; j++)
 	    if (jv_posValide(i+x, j+y, p) && p->grille[i+x][j+y])
 		v++;
-    return v;
+    return v-1;
 }
 
 /* retourne l'etat suivant de la cellule */

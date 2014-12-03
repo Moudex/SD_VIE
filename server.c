@@ -145,13 +145,13 @@ static void app(void)
 				if (clients[i].generation != p_statuts->generation)
 				{
 				    /* enlever le client */
-				    close(clients[i].sock);
+/*				    close(clients[i].sock);
 				    remove_client(clients, i, &actual);
-				}
+*/				}else{
 				
 				jv_unpack_s(p_vie_next, cmd.task.cells, clients[i].x, clients[i].y, cmd.task.width, cmd.task.height);
 				jvs_termine(p_statuts, clients[i].x, clients[i].y, clients[i].width, clients[i].height);
-
+}
 				//printf("%d a termine son calcul avec succes\n", i);
 				break;
 

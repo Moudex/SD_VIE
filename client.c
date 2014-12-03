@@ -78,9 +78,9 @@ static void app(const char *address)
 
 		else 
 		{
-		    Command q;
+/*		    Command q;
 		    readCmd(sock, &q);
-		    printf("erreur cmd %d\n", q.type);
+*/		    printf("erreur cmd %d\n", cmd->type);
 		}
 		free(cmd);
 	    }
