@@ -15,6 +15,7 @@
 #include "commande.h"
 #include "jvie.h"
 #include "jvie_serv.h"
+#include "affichage.h"
 
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
@@ -27,7 +28,7 @@ typedef struct in_addr IN_ADDR;
 #define PORT 2014
 #define MAX_CLIENTS 100
 #define BLOCK_SIZE 5
-#define GAME_SIZE 64
+#define GAME_SIZE 32
 
 typedef struct
 {

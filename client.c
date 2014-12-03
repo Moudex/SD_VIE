@@ -5,12 +5,12 @@ static void app(const char *address)
     SOCKET sock = init_connection(address);
     fd_set rdfs;
     etat_c et = REFU;
+    aff_init();
 
     /* Envoi de la commande pour démarrer communication */
     Command* c  = (Command*)malloc(sizeof(Command));
     c->type = CMD_START_COMMUNICATION;
     int start = writeCmd(sock, c);
-    printf("Envoi debuti\n");
 
 	while(1)
 	{
@@ -20,7 +20,6 @@ static void app(const char *address)
 	    /* Si calcul envoye, on en demande un autre */
 	    if (et == ENVOYE)
 	    {
-		printf("Demande d un calcul\n");
 		Command* cmd = (Command*)malloc(sizeof(Command));
 		cmd->type = CMD_REQUEST_TASK;
 		int n = writeCmd(sock, cmd);
@@ -41,14 +40,12 @@ static void app(const char *address)
 		readCmd(sock, &cmd);
 		if (cmd.type == CMD_START_COMMUNICATION)
 		    et = ENVOYE;
-		printf("Recoi debut\n");
 	    }
 
 
 	    /* Recois une commande */
 	    else if (et == DEMANDE && FD_ISSET(sock, &rdfs))
 	    {
-		printf("Recois commande\n");
 		Command* cmd = (Command*)malloc(sizeof(Command));
 		int n = readCmd(sock, cmd);
 		if (n == 0)
@@ -60,7 +57,6 @@ static void app(const char *address)
 		/* recois ordre d'attente */
 		if (cmd->type == CMD_NO_TASK)
 		{
-		    printf("Recois attente\n");
 		    sleep(cmd->noTask.waitingTime);
 		    et = ENVOYE;
 		}
@@ -68,15 +64,14 @@ static void app(const char *address)
 		/* recois calculs, le fait et l'envoi */
 		else if (cmd->type == CMD_TASK)
 		{
-		    printf("recois calcul\n");
 		    plateau* p = jv_unpack_c(cmd->task.cells, cmd->task.width, cmd->task.height);
 		    jv_nextGen(p);
+		    aff_plateau_c(p);
 		    char* coucou = (char*)malloc(sizeof(char)*cmd->task.width*cmd->task.height);
 		    jv_pack_c(p, coucou);
 		    free(cmd->task.cells);
 		    cmd->task.cells = coucou;
 		    writeCmd(sock, cmd);
-		    printf("Calcul envoye\n");
 		    free(cmd->task.cells);
 		    et = ENVOYE;
 		}
@@ -96,6 +91,7 @@ static void app(const char *address)
     writeCmd(sock, c);
     free(c);
     end_connection(sock);
+    aff_end();
 }
 
 static int init_connection(const char *address)

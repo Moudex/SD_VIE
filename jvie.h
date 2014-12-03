@@ -24,6 +24,8 @@ char jv_getEtatSuivant(int x, int y, plateau* p);
 /* Initialise le plateau a vide */
 void jv_initPlat(plateau *p);
 
+void jv_randPlat(plateau* p);
+
 /* Alloue un nouveau plateau */
 plateau* jv_newPlat(int width, int height);
 

@@ -10,10 +10,13 @@ static void app(void)
     /* Initialiser la plateau de jeu de la vie
      * et son plateau d'etats
      */
-    
+
     plateau* p_vie = jv_newPlat(GAME_SIZE, GAME_SIZE);
+    jv_randPlat(p_vie);
     plateau* p_vie_next = jv_newPlat(GAME_SIZE, GAME_SIZE);
     PlateauStatut* p_statuts = jvs_newPlat(GAME_SIZE, GAME_SIZE);
+
+    aff_init();
 
     fd_set rdfs;
     while(1)
@@ -124,7 +127,6 @@ static void app(void)
 				 {
 				     //printf("Calcul envoye\n");
 				    /* Assigne le block au client */
-				     printf("x=%d y=%d w=%d h=%d\n", b.x, b.y, b.width, b.height);
 				   jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
 				   clients[i].generation = p_statuts->generation;
 				   clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
@@ -162,17 +164,19 @@ static void app(void)
 		}
 	    }
 	}
+	
+	aff_plateau_s(p_vie, p_statuts);
 
 	/* verifier changement generations */
 	if (jvs_nextGen(p_statuts) != -1)
 	{
-	    printf("Passe a la generation %d\n", p_statuts->generation);
 	    p_vie = p_vie_next;
 	}
 
     }
     clear_clients(clients, actual);
     end_connection(sock);
+    aff_end();
 }
 
 static void clear_clients(Client *clients, int actual)

@@ -48,6 +48,17 @@ void jv_initPlat(plateau *p)
 	    p->grille[i][j] = 0;
 }
 
+/* Remplis le plateau aleatoirement */
+void jv_randPlat(plateau* p)
+{
+    int i,j;
+    for (i=0; i<p->width; i++)
+	for (j=0; j<p->height; j++)
+	{
+	    p->grille[i][j] = rand()%2;
+	}
+}
+
 /* Alloue un nouveau plateau */
 plateau* jv_newPlat(int width, int height)
 {
