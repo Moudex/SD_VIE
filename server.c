@@ -61,9 +61,7 @@ static void app(void)
 		continue;
 	    }
 	    
-	    printf("Recois debut\n");
 	    writeCmd(csock, &cmd);
-	    printf("Envoi debut\n");
 	    max = csock > max ? csock : max;
 
 	    FD_SET(csock, &rdfs);
@@ -110,14 +108,12 @@ static void app(void)
 			    	if (b.x == -1)
 			    	{
 			    		/* erreur, aucun block libre */
-			    		/* TODO envoyer commande attente */
 					Command att;
 					att.type = CMD_NO_TASK;
-					att.noTask.waitingTime = 50.0;
+					att.noTask.waitingTime = 5.0;
 					writeCmd(clients[i].sock, &att);
 			    		break;
 			    	}
-			    	
 			    	 /* pack des cellules */
 				 char* pack = jv_pack_s(p_vie, b.x, b.y, b.width+2, b.height+2);
 			    	 /* Construction et envoi de la commande */
@@ -128,6 +124,7 @@ static void app(void)
 				 {
 				     //printf("Calcul envoye\n");
 				    /* Assigne le block au client */
+				     printf("x=%d y=%d w=%d h=%d\n", b.x, b.y, b.width, b.height);
 				   jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
 				   clients[i].generation = p_statuts->generation;
 				   clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
@@ -169,7 +166,7 @@ static void app(void)
 	/* verifier changement generations */
 	if (jvs_nextGen(p_statuts) != -1)
 	{
-	    printf("Generation suivante\n");
+	    printf("Passe a la generation %d\n", p_statuts->generation);
 	    p_vie = p_vie_next;
 	}
 

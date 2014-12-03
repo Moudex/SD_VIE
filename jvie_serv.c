@@ -3,7 +3,7 @@
 /* La zone est elle sur le plateau */
 int jvs_zoneValide(PlateauStatut* statuts, int x, int y, int width, int height)
 {
-    return (0<x && 0<y && statuts->width>x+width && statuts->height>y+height);
+    return (0<=x && 0<=y && statuts->width>x+width && statuts->height>y+height);
 }
 
 /* La zone est elle a traiter */
@@ -117,8 +117,8 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 	int i,j;
 	if (width > 1 || height > 1)
 	{
-	for (i=0; i<statuts->width-width; i++)
-		for (j=0; j<statuts->height-height; j++)
+	for (i=0; i<=statuts->width-width; i++)
+		for (j=0; j<=statuts->height-height; j++)
 		{
 			/* teste ce motif */
 			int libre=1;
@@ -147,11 +147,10 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 			}
 		}
 	}
-	else
-	{
+	
 	/* Sinon on retourne le premier block 1X1 dispo */
 	for (i=0; i<statuts->width; i++)
-		for (j=0; j<height; j++)
+		for (j=0; j<statuts->height; j++)
 			if (statuts->grille[i][j].statut == A_TRAITER)
 			{
 				Block b;
@@ -161,7 +160,7 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 				b.height = 1;
 				return b;	
 			}
-	}
+	
 	
 	/* Aucun block de dispo */
 	Block b;

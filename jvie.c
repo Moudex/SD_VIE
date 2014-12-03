@@ -104,18 +104,17 @@ void jv_nextGen(plateau* p)
 /* Compacte une portion de plateau pour l'envoi avec bordure supplémentaire*/
 char* jv_pack_s(plateau* p, int x, int y, int width, int height)
 {
-    if (x<0 || y<0 || x+width >= p->width || y+height >= p->height)
+    if (x<0 || y<0 || x+width-2 > p->width || y+height-2 > p->height)
 	return NULL;
     
-    int p_x = x-1, p_y = y-1;
 
     char* pack = (char*)malloc(sizeof(char)*width*height);
     int i,j;
     for (i=0; i<width; i++)
 	for (j=0; j<height; j++)
 	{
-	    if (jv_posValide(p_x+i,p_y+j,p))
-		pack[i*height+j] = p->grille[p_x+i][p_y+j];
+	    if (jv_posValide(x+i-1,y+j-1,p))
+		pack[i*height+j] = p->grille[x+i-1][y+j-1];
 	    else
 		pack[i*height+j] = 0;
 	}
