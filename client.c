@@ -80,7 +80,9 @@ static void app(const char *address)
 		{
 /*		    Command q;
 		    readCmd(sock, &q);
-*/		    printf("erreur cmd %d\n", cmd->type);
+		    printf("erreur cmd %d\n", cmd->type);
+*/
+			et = ENVOYE;
 		}
 		free(cmd);
 	    }
