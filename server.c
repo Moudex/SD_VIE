@@ -64,19 +64,21 @@ static void app(void)
 		continue;
 	    }
 	    
-	    writeCmd(csock, &cmd);
-	    max = csock > max ? csock : max;
+	    if(writeCmd(csock, &cmd) > 0)
+	    {
+		max = csock > max ? csock : max;
 
-	    FD_SET(csock, &rdfs);
-	    Client c;
-	    c.sock = csock;
-	    c.generation = -1;
-	    c.x = -1;
-	    c.y = -1;
-	    c.width = -1;
-	    c.height = -1;
-	    clients[actual] = c;
-	    actual ++;
+		FD_SET(csock, &rdfs);
+		Client c;
+		c.sock = csock;
+		c.generation = -1;
+		c.x = -1;
+		c.y = -1;
+		c.width = -1;
+		c.height = -1;
+		clients[actual] = c;
+		actual ++;
+	    }
 	}
 	else
 	{
@@ -131,6 +133,12 @@ static void app(void)
 				   clients[i].generation = p_statuts->generation;
 				   clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
 				 }
+				 else
+				 {
+				    /* enlever le client */
+				    close(clients[i].sock);
+				    remove_client(clients, i, &actual);
+				 }
 			    	 free(pack);
 			    	
 				break;
@@ -145,9 +153,9 @@ static void app(void)
 				if (clients[i].generation != p_statuts->generation)
 				{
 				    /* enlever le client */
-/*				    close(clients[i].sock);
+				    close(clients[i].sock);
 				    remove_client(clients, i, &actual);
-*/				}else{
+				}else{
 				
 				jv_unpack_s(p_vie_next, cmd.task.cells, clients[i].x, clients[i].y, cmd.task.width, cmd.task.height);
 				jvs_termine(p_statuts, clients[i].x, clients[i].y, clients[i].width, clients[i].height);
