@@ -3,7 +3,7 @@
 /* La zone est elle sur le plateau */
 int jvs_zoneValide(PlateauStatut* statuts, int x, int y, int width, int height)
 {
-    return (0<=x && 0<=y && statuts->width>x+width && statuts->height>y+height);
+    return (0<=x && 0<=y && statuts->width>=x+width && statuts->height>=y+height);
 }
 
 /* La zone est elle a traiter */
@@ -14,7 +14,7 @@ int jvs_zoneLibre(PlateauStatut* statuts, int x, int y, int width, int height)
     int i,j;
     for (i=x; i<x+width; i++)
 	for (j=y; j<y+height; j++)
-	    if (statuts->grille[i][j].statut != A_TRAITER)
+	    if (statuts->grille[i][j].statut > A_TRAITER)
 		return 0;
     return 1;
 }
@@ -61,9 +61,17 @@ int jvs_assigne(PlateauStatut* statuts, int x, int y, int width, int height, SOC
     for (i=x; i<x+width; i++)
 	for (j=y; j<y+height; j++)
 	{
-	    statuts->grille[i][j].statut = EN_TRAITEMENT;
+	    statuts->grille[i][j].statut += 3;
 	    statuts->grille[i][j].client = client;
 	}
+    return 0;
+}
+
+/* Assigne un client a la resolution d'un heal ou virus */
+int jvs_assigne_vh(PlateauStatut* statuts, int x, int y, SOCKET client)
+{
+    statuts->grille[x][y].statut -= 3;
+    statuts->grille[x][y].client = client;
     return 0;
 }
 
@@ -74,7 +82,7 @@ void jvs_reprend(PlateauStatut* statuts, SOCKET client)
     for (i=0; i<statuts->width; i++)
 	for (j=0; j<statuts->height; j++)
 	    if (statuts->grille[i][j].client == client)
-		statuts->grille[i][j].statut = A_TRAITER;
+		statuts->grille[i][j].statut -= 3;
 }
 
 /* Termine le traitement d'un client */
@@ -83,8 +91,17 @@ int jvs_termine(PlateauStatut* statuts, int x, int y, int width, int height)
     int i,j;
     for (i=x; i<x+width; i++)
 	for (j=y; j<y+height; j++)
-	    statuts->grille[i][j].statut = TRAITEE;
+	    statuts->grille[i][j].statut += 3;
     return 0;
+}
+
+int jvs_termine2(PlateauStatut* statuts, SOCKET client)
+{
+    int i,j;
+    for (i=0; i<statuts->width; i++)
+	for (j=0; j<statuts->height; j++)
+	    if (statuts->grille[i][j].statut > 2 && statuts->grille[i][j].statut<6 && statuts->grille[i][j].client == client)
+		statuts->grille[i][j].statut += 3;
 }
 
 /* La generation est elle terminee */
@@ -128,7 +145,7 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 				int l=j;
 				while (libre && l<j+height)
 				{
-					if (statuts->grille[k][l].statut != A_TRAITER)
+					if (statuts->grille[k][l].statut > A_TRAITER)
 						libre = 0;
 					l++;
 				}
@@ -139,6 +156,7 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 			if (libre)
 			{
 				Block b;
+				b.t = NORMAL;
 				b.x = i;
 				b.y = j;
 				b.width = width;
@@ -151,9 +169,10 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 	/* Sinon on retourne le premier block 1X1 dispo */
 	for (i=0; i<statuts->width; i++)
 		for (j=0; j<statuts->height; j++)
-			if (statuts->grille[i][j].statut == A_TRAITER)
+			if (statuts->grille[i][j].statut <= A_TRAITER)
 			{
 				Block b;
+				b.t = NORMAL;
 				b.x = i;
 				b.y = j;
 				b.width = 1;
@@ -163,10 +182,40 @@ Block jvs_getBlock(PlateauStatut* statuts, int width, int height)
 	
 	
 	/* Aucun block de dispo */
+	/* TODO traiter les block 6 et 7 */
+	/* TODO ajouter un type au block */
+	for (i=0; i<statuts->width; i++)
+	    for (j=0; j<statuts->height; j++)
+		if (statuts->grille[i][j].statut == TRAITEE_V || statuts->grille[i][j].statut == TRAITEE_H)
+		{
+		    Block b;
+		    b.t = statuts->grille[i][j].statut %3;
+		    b.x = i;
+		    b.y = j;
+		    b.width = 1;
+		    b.height = 1;
+		    return b;
+		}
+
 	Block b;
 	b.x = -1;
 	b.y = -1;
 	b.width = -1;
 	b.height = -1;
 	return b;
+}
+
+
+int jvs_set_vh(PlateauStatut* statuts, type t, int x, int y)
+{
+    if(statuts->grille[x][y].statut %3 == 2)
+	statuts->grille[x][y].statut -= 2-t;
+    else if (statuts->grille[x][y].statut %3 != t)
+    {
+	if (t == VIRUS)
+	    statuts->grille[x][y].statut --;
+	else
+	    statuts->grille[x][y].statut ++;
+    }
+    return 0;
 }

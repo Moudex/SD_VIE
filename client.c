@@ -1,4 +1,5 @@
 #include "client.h"
+#include <time.h>
 
 static void app(const char *address)
 {
@@ -6,6 +7,7 @@ static void app(const char *address)
     fd_set rdfs;
     etat_c et = REFU;
     aff_init();
+    srand(time(NULL));
 
     /* Envoi de la commande pour démarrer communication */
     Command* c  = (Command*)malloc(sizeof(Command));
@@ -58,7 +60,6 @@ static void app(const char *address)
 		if (cmd->type == CMD_NO_TASK)
 		{
 		    sleep(cmd->noTask.waitingTime);
-		    et = ENVOYE;
 		}
 
 		/* recois calculs, le fait et l'envoi */
@@ -73,7 +74,47 @@ static void app(const char *address)
 		    cmd->task.cells = coucou;
 		    writeCmd(sock, cmd);
 		    free(cmd->task.cells);
-		    et = ENVOYE;
+		}
+
+		else if (cmd->type == CMD_HEAL)
+		{
+		    int x = rand()% cmd->heal.width;
+		    int y = rand()% cmd->heal.height;
+		    Command c;
+		    c.type = CMD_LIST_CELL;
+		    c.listCell.type = CMD_HEAL;
+		    c.listCell.nb = 1;
+		    c.listCell.list = (coord*)malloc(sizeof(coord));
+		    c.listCell.list[0].x = x;
+		    c.listCell.list[0].y = y;
+		    writeCmd(sock, &c);
+		    free(c.listCell.list);
+		}
+
+		else if (cmd->type == CMD_VIRUS)
+		{
+		    /* TODO générer les diaginales */
+		    int x = rand()% cmd->heal.width;
+		    int y = rand()% cmd->heal.height;
+		    Command c;
+		    c.type = CMD_LIST_CELL;
+		    c.listCell.type = CMD_VIRUS;
+		    c.listCell.nb = 1;
+		    c.listCell.list = (coord*)malloc(sizeof(coord));
+		    c.listCell.list[0].x = x;
+		    c.listCell.list[0].y = y;
+		    writeCmd(sock, &c);
+		    free(c.listCell.list);
+		}
+
+		else if (cmd->type == CMD_LIST_CELL)
+		{
+		    if(cmd->listCell.type == VIRUS)
+			cmd->listCell.list[0].cell = 0;
+		    else
+			cmd->listCell.list[0].cell = 1- cmd->listCell.list[0].cell;
+		    cmd->listCell.type = CMD_TASK;
+		    writeCmd(sock, cmd);
 		}
 
 		else 
@@ -82,9 +123,9 @@ static void app(const char *address)
 		    readCmd(sock, &q);
 		    printf("erreur cmd %d\n", cmd->type);
 */
-			et = ENVOYE;
 		}
 		free(cmd);
+		et = ENVOYE;
 	    }
 	}
 

@@ -27,12 +27,13 @@ typedef struct in_addr IN_ADDR;
 #define CRLF "\r\n"
 #define PORT 2014
 #define MAX_CLIENTS 100
-#define BLOCK_SIZE 6
+#define BLOCK_SIZE 5
 #define GAME_SIZE 50
 
 typedef struct
 {
     SOCKET sock;
+    CommandType type;
     int generation;
     int x;
     int y;

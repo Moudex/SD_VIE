@@ -11,46 +11,70 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-struct CmdStartCommunication
+typedef enum
 {
-    long iteration;
-};
-typedef struct CmdStartCommunication CmdStartCommunication;
-
-struct CmdRequestTask
-{
-};
-typedef struct CmdRequestTask CmdRequestTask;
-
-struct CmdNoTask
-{
-    long waitingTime;
-};
-typedef struct CmdNoTask CmdNoTask;
-
-struct CmdTask
-{
-    int width;
-    int height;
-    char* cells;
-};
-typedef struct CmdTask CmdTask;
-
-struct CmdEndCommunication
-{
-};
-typedef struct CmdEndCommunication CmdEndCommunication;
-
-enum CommandType {
     CMD_START_COMMUNICATION = 1,
     CMD_REQUEST_TASK = 2,
     CMD_NO_TASK = 3,
     CMD_TASK = 4,
-    CMD_END_COMMUNICATION = 5
-};
-typedef enum CommandType CommandType;
+    CMD_END_COMMUNICATION = 5,
+    CMD_LIST_CELL = 6,
+    CMD_HEAL = 7,
+    CMD_VIRUS = 8
+} CommandType;
 
-struct Command
+typedef struct
+{
+    int width;
+    int height;
+} CmdHeal;
+
+typedef struct
+{
+    int width;
+    int height;
+} CmdVirus;
+
+typedef struct
+{
+    int x;
+    int y;
+    char cell;
+} coord;
+
+typedef struct
+{
+    CommandType type;
+    int nb;
+    coord* list;
+} CmdListCell;
+
+typedef struct
+{
+    long iteration;
+} CmdStartCommunication;
+
+typedef struct
+{
+} CmdRequestTask;
+
+typedef struct
+{
+    long waitingTime;
+} CmdNoTask;
+
+typedef struct
+{
+    int width;
+    int height;
+    char* cells;
+} CmdTask;
+
+typedef struct
+{
+} CmdEndCommunication;
+
+typedef struct
 {
     CommandType type;
     union
@@ -60,9 +84,11 @@ struct Command
 	CmdNoTask		noTask;
 	CmdTask			task;
 	CmdEndCommunication	endCom;
+	CmdListCell		listCell;
+	CmdHeal			heal;
+	CmdVirus		virus;
     };
-};
-typedef struct Command Command;
+} Command;
 
 
 int writeCmd(int socket, Command* cmd);

@@ -42,6 +42,31 @@ int readCmd(int socket, Command* cmd)
 		}
 		break;
 	    }
+
+	case CMD_LIST_CELL:
+	    {
+		int n2 = read(socket, &(cmd->listCell), sizeof(CmdListCell) - sizeof(coord*));
+		if (n2 <= 0) return -1;
+		cmd->listCell.list = (coord*)malloc(cmd->listCell.nb * sizeof(coord));
+		for (int i = 0; i < cmd->listCell.nb; i++)
+		{
+		    n2 = read(socket, cmd->listCell.list + i, sizeof(coord));
+		    n += n2;
+		    if (n2<=0)
+		    {
+			free(cmd->listCell.list);
+			cmd->listCell.nb = 0;
+			return -1;
+		    }
+		}
+		break;
+	    }
+
+	case CMD_HEAL:
+	    n += read(socket, &(cmd->heal), sizeof(CmdHeal));
+	    break;
+	case CMD_VIRUS:
+	    n += read(socket, &(cmd->virus), sizeof(CmdVirus));
 	case CMD_END_COMMUNICATION:
 		n += read(socket, &(cmd->endCom), sizeof(CmdEndCommunication));
 		break;
@@ -83,6 +108,25 @@ int writeCmd(int socket, Command* cmd)
 	    }
 	    break;
 	    }
+	case CMD_LIST_CELL:
+	    {
+		int n2 = write(socket, &(cmd->listCell), sizeof(CmdListCell) - sizeof(coord*));
+		if (n2<=0) return -1;
+		n += n2;
+		for (int i = 0; i < cmd->listCell.nb; i++)
+		{
+		    n2 = write(socket, cmd->listCell.list + i, sizeof(coord));
+		    if (n2<=0) return -1;
+		    n+=n2;
+		}
+		break;
+	    }
+	case CMD_HEAL:
+	    n += write(socket, &(cmd->heal), sizeof(CmdHeal));
+	    break;
+	case CMD_VIRUS:
+	    n += write(socket, &(cmd->virus), sizeof(CmdVirus));
+	    break;
 	case CMD_END_COMMUNICATION:
 	    n += write(socket, &(cmd->endCom), sizeof(CmdEndCommunication));
 	    break;

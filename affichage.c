@@ -16,9 +16,17 @@ void aff_init(void)
 	perror("impossible d'initialiser les couleurs");
     }
 
-    init_pair(1, COLOR_WHITE, COLOR_BLACK); /* Non traite */
-    init_pair(2, COLOR_WHITE, COLOR_YELLOW); /* En cour de traitement */
-    init_pair(3, COLOR_WHITE, COLOR_GREEN); /* traite */
+    init_pair(1, COLOR_MAGENTA, COLOR_BLACK); /* Non traite V */
+    init_pair(2, COLOR_BLUE, COLOR_BLACK); /* Non tarite H */
+    init_pair(3, COLOR_WHITE, COLOR_BLACK); /* Non traite */
+
+    init_pair(4, COLOR_MAGENTA, COLOR_YELLOW); /* En cour de traitement v */
+    init_pair(5, COLOR_BLUE, COLOR_YELLOW); /* En cour de traitement h */
+    init_pair(6, COLOR_WHITE, COLOR_YELLOW); /* En cour de traitement */
+
+    init_pair(7, COLOR_MAGENTA, COLOR_GREEN); /* traite v */
+    init_pair(8, COLOR_BLUE, COLOR_GREEN); /* traite h */
+    init_pair(9, COLOR_WHITE, COLOR_GREEN); /* traite */
 }
 
 void aff_end(void)
@@ -50,19 +58,7 @@ void aff_plateau_s(plateau* p, PlateauStatut* statuts)
 	    if (p->grille[i][j])
 		c = 'O';
 
-	    switch (statuts->grille[i][j].statut)
-	    {
-		case A_TRAITER:
-		    attrset(COLOR_PAIR(1));
-		    break;
-		case EN_TRAITEMENT:
-		    attrset(COLOR_PAIR(2));
-		    break;
-		case TRAITEE:
-		    attrset(COLOR_PAIR(3));
-		    break;
-	    }
-
+	    attrset(COLOR_PAIR(statuts->grille[i][j].statut+1));
 	    mvprintw(i,j, "%c", c);
 	}
     refresh();

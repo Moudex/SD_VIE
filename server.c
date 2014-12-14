@@ -1,4 +1,5 @@
 #include "server.h"
+#include <time.h>
 
 static void app(void)
 {
@@ -6,7 +7,7 @@ static void app(void)
     int actual = 0;
     int max = sock;
     Client clients[MAX_CLIENTS];
-    
+    srand(time(NULL));
     /* Initialiser la plateau de jeu de la vie
      * et son plateau d'etats
      */
@@ -71,6 +72,7 @@ static void app(void)
 		FD_SET(csock, &rdfs);
 		Client c;
 		c.sock = csock;
+		c.type = 0;
 		c.generation = -1;
 		c.x = -1;
 		c.y = -1;
@@ -103,69 +105,160 @@ static void app(void)
 			    Command com;
 			    /* CLient demande une tache */
 			    case CMD_REQUEST_TASK:
-			    	com.type = CMD_TASK;
-			    	
+			    {	
 			    	/* TODO verifier si le process n'est pas déja sur un block non traité ou en traitement */
 			    	
-				//printf("%d demande un calcul\n", i);
+				/* sélection aleatoire d'une commande */
+				int ctp = rand() % 100;
 
-			    	Block b = jvs_getBlock(p_statuts, BLOCK_SIZE, BLOCK_SIZE);
-			    	if (b.x == -1)
-			    	{
-			    		/* erreur, aucun block libre */
+				/* Retirer une tache du sac */
+				if (ctp < 80)
+				{
+				    Block b = jvs_getBlock(p_statuts, BLOCK_SIZE, BLOCK_SIZE);
+				    if (b.x == -1)
+				    {
+					/* erreur, aucun block libre */
 					Command att;
 					att.type = CMD_NO_TASK;
 					att.noTask.waitingTime = 5.0;
 					writeCmd(clients[i].sock, &att);
-			    		break;
-			    	}
-			    	 /* pack des cellules */
-				 char* pack = jv_pack_s(p_vie, b.x, b.y, b.width+2, b.height+2);
-			    	 /* Construction et envoi de la commande */
-			    	 com.task.width = b.width+2;
-			    	 com.task.height = b.height+2;
-			    	 com.task.cells = pack;
-			    	 if (writeCmd(clients[i].sock, &com)>0)
-				 {
-				     //printf("Calcul envoye\n");
-				    /* Assigne le block au client */
-				   jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock);
-				   clients[i].generation = p_statuts->generation;
-				   clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
-				 }
-				 else
-				 {
-				    /* enlever le client */
-				    close(clients[i].sock);
-				    remove_client(clients, i, &actual);
-				 }
-			    	 free(pack);
-			    	
-				break;
+					break;
+				    }
 
-			    /* Client envoi un resultat */
-			    case CMD_TASK:
-				/* Recevoir les cellules
-				 * verifier la génération
-				 * Les insérer dans le tableau next gen
-				 * libérer l'etat du block
-				 */
-				if (clients[i].generation != p_statuts->generation)
+				    /* verifier le type de bloc */
+				    if (b.t == NORMAL)
+				    {
+					/* Construction et envoi de la commande */
+					char* pack = jv_pack_s(p_vie, b.x, b.y, b.width+2, b.height+2);
+					com.type = CMD_TASK;
+					com.task.width = b.width+2;
+					com.task.height = b.height+2;
+					com.task.cells = pack;
+					if (writeCmd(clients[i].sock, &com)>0)
+					{
+					    /* Assigne le block au client */
+					    if (jvs_assigne(p_statuts, b.x, b.y, b.width, b.height, clients[i].sock) == -1)
+						printf("erreur");
+					    clients[i].generation = p_statuts->generation;
+					    clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;		    	 
+					    clients[i].type = CMD_TASK;
+					}
+					else
+					{
+					    /* enlever le client */
+					    close(clients[i].sock);
+					    remove_client(clients, i, &actual);
+					}
+					free(pack);
+				    }
+				    else
+				    {
+					/* construire la commande */
+					com.type = CMD_LIST_CELL;
+					if (b.t == HEAL) com.listCell.type = CMD_HEAL;
+					else com.listCell.type = CMD_VIRUS;
+					com.listCell.nb =1;
+					com.listCell.list = (coord*)malloc(sizeof(coord));
+					com.listCell.list[0].cell = p_vie->grille[b.x][b.y];
+					com.listCell.list[0].x = b.x; com.listCell.list[0].y = b.y;
+					/* envoyer la cellule */
+					if (writeCmd(clients[i].sock, &com)>0)
+					{
+					    /* Assigner le traitement heal */
+					    jvs_assigne_vh(p_statuts, b.x, b.y, clients[i].sock);
+					    clients[i].generation = p_statuts->generation;
+					    clients[i].x = b.x; clients[i].y = b.y; clients[i].width = b.width; clients[i].height = b.height;
+					    if (b.t == HEAL) clients[i].type = CMD_HEAL;
+					    else clients[i].type = CMD_VIRUS;
+					}
+					else
+					{
+					    /* Enelever le client */
+					    close(clients[i].sock);
+					    remove_client(clients, i, &actual);
+					}
+					free(com.listCell.list);
+				    }
+				}
+				/* Générer vie */
+				else if (ctp<90)
 				{
-				    /* enlever le client */
-				 /*   close(clients[i].sock);
-				    remove_client(clients, i, &actual);*/
-				}else{
-				
+				    /* Construction commande */
+				    com.type = CMD_HEAL;
+				    com.heal.width = p_vie->width;
+				    com.heal.height = p_vie->height;
+				    /* Envoi de la commande */
+				    if (writeCmd(clients[i].sock, &com)<=0)
+				    {
+					/* Enlever le client */
+					close(clients[i].sock);
+					remove_client(clients, i, &actual);
+				    }
+				}
+				/* Infection virale */
+				else
+				{
+				    /* Construction commande */
+				    com.type = CMD_VIRUS;
+				    com.virus.width = p_vie->width;
+				    com.virus.height = p_vie->height;
+				    /* Envoi de la commande */
+				    if (writeCmd(clients[i].sock, &com) <=0)
+				    {
+					/* Enlever client */
+					close(clients[i].sock);
+					remove_client(clients, i, &actual);
+				    }
+				}
+				break;
+			    }
+
+			    /* Client envoi resultat generation */
+			    case CMD_TASK:
+			    if (p_statuts->generation == clients[i].generation)
+			    {
 				jv_unpack_s(p_vie_next, cmd.task.cells, clients[i].x, clients[i].y, cmd.task.width, cmd.task.height);
 				jvs_termine(p_statuts, clients[i].x, clients[i].y, clients[i].width, clients[i].height);
-}
-				//printf("%d a termine son calcul avec succes\n", i);
+				//jvs_termine2(p_statuts, clients[i].sock);
+			    }	
 				break;
 
+			    /* autres types commandes */
+			    case CMD_LIST_CELL:
+			    {
+				type t = VIRUS;
+				switch (cmd.listCell.type)
+				{
+				case CMD_HEAL:
+				    t=HEAL;
+				case CMD_VIRUS:
+				{
+				    int k; 
+				    for (k = 0; k <cmd.listCell.nb; k++)
+				    {
+					jvs_set_vh(p_statuts, t, cmd.listCell.list[k].x, cmd.listCell.list[k].y);
+				    }
+				    break;
+				}
+				case CMD_TASK:
+				{
+				    /* Récupérer l'etat de la cellule */
+				    int k;
+				    for (k=0; k<cmd.listCell.nb; k++)
+				    {
+					p_vie_next->grille[cmd.listCell.list[k].x][cmd.listCell.list[k].y] = cmd.listCell.list[k].cell;
+					p_statuts->grille[cmd.listCell.list[k].x][cmd.listCell.list[k].y].statut = TRAITEE; 
+				    }
+				    break;
+				}
+				default:
+				    break;
+				}
+				free(cmd.listCell.list);
+			    }
 			    default:
 				break;
-
+			    
 			}
 		    }
 		    break;
