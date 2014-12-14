@@ -93,7 +93,7 @@ static void app(const char *address)
 
 		else if (cmd->type == CMD_VIRUS)
 		{
-		    /* TODO générer les diaginales */
+		    /*générer les diaginales */
 		    int x = rand()% cmd->heal.width;
 		    int y = rand()% cmd->heal.height;
 		    Command c;
@@ -103,13 +103,29 @@ static void app(const char *address)
 		    c.listCell.list = (coord*)malloc(sizeof(coord));
 		    c.listCell.list[0].x = x;
 		    c.listCell.list[0].y = y;
+
+		    int i,j,k,l;
+		    for (i=-1; i<=1; i+=2)
+			for(j=-1; j<=1; j+=2)
+			{
+			    k=x+i; l=y+j;
+			    while (k>=0 && k<cmd->heal.width && l>=0 && l<cmd->heal.height)
+			    {
+				c.listCell.nb += 1;
+				c.listCell.list = (coord*)realloc(c.listCell.list, sizeof(coord)*c.listCell.nb);
+				c.listCell.list[c.listCell.nb-1].x = k;
+				c.listCell.list[c.listCell.nb-1].y = l;
+				k+=i; l+=j;
+			    }
+			}
+
 		    writeCmd(sock, &c);
 		    free(c.listCell.list);
 		}
 
 		else if (cmd->type == CMD_LIST_CELL)
 		{
-		    if(cmd->listCell.type == VIRUS)
+		    if(cmd->listCell.type == CMD_VIRUS)
 			cmd->listCell.list[0].cell = 0;
 		    else
 			cmd->listCell.list[0].cell = 1- cmd->listCell.list[0].cell;

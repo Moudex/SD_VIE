@@ -16,6 +16,7 @@ static void app(void)
     jv_randPlat(p_vie);
     plateau* p_vie_next = jv_newPlat(GAME_SIZE, GAME_SIZE);
     PlateauStatut* p_statuts = jvs_newPlat(GAME_SIZE, GAME_SIZE);
+    int fintache = 0;
 
     aff_init();
 
@@ -109,7 +110,11 @@ static void app(void)
 			    	/* TODO verifier si le process n'est pas déja sur un block non traité ou en traitement */
 			    	
 				/* sélection aleatoire d'une commande */
-				int ctp = rand() % 100;
+				int ctp;
+				if (!fintache)
+				    ctp = rand() % 100;
+				else
+				    ctp = 1;
 
 				/* Retirer une tache du sac */
 				if (ctp < 80)
@@ -120,7 +125,7 @@ static void app(void)
 					/* erreur, aucun block libre */
 					Command att;
 					att.type = CMD_NO_TASK;
-					att.noTask.waitingTime = 5.0;
+					att.noTask.waitingTime = 0.5;
 					writeCmd(clients[i].sock, &att);
 					break;
 				    }
@@ -153,6 +158,7 @@ static void app(void)
 				    }
 				    else
 				    {
+					fintache = 1;
 					/* construire la commande */
 					com.type = CMD_LIST_CELL;
 					if (b.t == HEAL) com.listCell.type = CMD_HEAL;
@@ -181,7 +187,7 @@ static void app(void)
 				    }
 				}
 				/* Générer vie */
-				else if (ctp<90)
+				else if (ctp<98)
 				{
 				    /* Construction commande */
 				    com.type = CMD_HEAL;
@@ -272,6 +278,7 @@ static void app(void)
 	if (jvs_nextGen(p_statuts) != -1)
 	{
 	    p_vie = p_vie_next;
+	    fintache = 0;
 	}
 
     }
