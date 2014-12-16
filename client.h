@@ -32,7 +32,7 @@ typedef struct in_addr IN_ADDR;
 typedef enum etat_c etat_c;
 enum etat_c { DEMANDE, ENVOYE, RECU, REFU };
 
-static void app(const char *address);
+static void app(const char *address, const int verbose);
 static int init_connection(const char *address);
 static void end_connection(int sock);
 

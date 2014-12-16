@@ -16,16 +16,16 @@ void aff_init(void)
 	perror("impossible d'initialiser les couleurs");
     }
 
-    init_pair(1, COLOR_MAGENTA, COLOR_BLACK); /* Non traite V */
-    init_pair(2, COLOR_BLUE, COLOR_BLACK); /* Non tarite H */
+    init_pair(1, COLOR_WHITE, COLOR_MAGENTA); /* Non traite V */
+    init_pair(2, COLOR_WHITE, COLOR_BLUE); /* Non tarite H */
     init_pair(3, COLOR_WHITE, COLOR_BLACK); /* Non traite */
 
     init_pair(4, COLOR_MAGENTA, COLOR_YELLOW); /* En cour de traitement v */
     init_pair(5, COLOR_BLUE, COLOR_YELLOW); /* En cour de traitement h */
     init_pair(6, COLOR_WHITE, COLOR_YELLOW); /* En cour de traitement */
 
-    init_pair(7, COLOR_MAGENTA, COLOR_GREEN); /* traite v */
-    init_pair(8, COLOR_BLUE, COLOR_GREEN); /* traite h */
+    init_pair(7, COLOR_WHITE, COLOR_MAGENTA); /* traite v */
+    init_pair(8, COLOR_WHITE, COLOR_BLUE); /* traite h */
     init_pair(9, COLOR_WHITE, COLOR_GREEN); /* traite */
 }
 

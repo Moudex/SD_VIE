@@ -1,12 +1,13 @@
 #include "client.h"
 #include <time.h>
 
-static void app(const char *address)
+static void app(const char *address, const int verbose)
 {
     SOCKET sock = init_connection(address);
     fd_set rdfs;
     etat_c et = REFU;
-    aff_init();
+    if (verbose)
+	aff_init();
     srand(time(NULL));
 
     /* Envoi de la commande pour démarrer communication */
@@ -67,7 +68,8 @@ static void app(const char *address)
 		{
 		    plateau* p = jv_unpack_c(cmd->task.cells, cmd->task.width, cmd->task.height);
 		    jv_nextGen(p);
-		    aff_plateau_c(p);
+		    if (verbose)
+			aff_plateau_c(p);
 		    char* coucou = (char*)malloc(sizeof(char)*cmd->task.width*cmd->task.height);
 		    jv_pack_c(p, coucou);
 		    free(cmd->task.cells);
@@ -150,7 +152,8 @@ static void app(const char *address)
     writeCmd(sock, c);
     free(c);
     end_connection(sock);
-    aff_end();
+    if (verbose)
+	aff_end();
 }
 
 static int init_connection(const char *address)
@@ -198,6 +201,11 @@ int main(int argc, char **argv)
     }
 
     app(argv[1]);
-*/ app("127.0.0.1");
+*/ 
+    int verbose = 0;
+    if (argc == 1)
+	verbose = 1;
+
+    app("127.0.0.1", verbose);
     return EXIT_SUCCESS;
 }
