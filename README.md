@@ -68,13 +68,13 @@ Pour une meilleure organisation, nous avons séparé notre projet en fichiers, u
 
 Ce fichier gère tout ce qui est en rapport avec le jeu de la vie, on y trouve une structure importante : le plateau de jeu.
 
-`
+```
 typedef struct {
     int width;
     int height;
     char** grille;
 } plateau;
-`
+```
 
 Utilisé aussi bien par le coordinateur que les assistants, il intègre deux entiers _width_ et _height_ pour définir les dimensions du plateau. On retrouve également un tableau à deux dimensions de type _char_. Une cellule peut être soit vivante soit morte, le type booléen n'existant pas dans le langage C, nous avons choisi le type _char_ car il occupe moins d'espace mémoire qu'un entier. Il occuperas également moins de bande passante pour le réseau.
 
@@ -83,7 +83,7 @@ Utilisé aussi bien par le coordinateur que les assistants, il intègre deux ent
 
 Utilisé principalement par le coordinateur, ce fichier permet de gérer les blocs de données attribués aux assistants. Il s'agit du _sac de tâches_.
 
-`
+```
 typedef int SOCKET;
 
 typedef enum {
@@ -124,7 +124,7 @@ typedef struct {
     int width;
     int height;
 } Block;
-`
+```
 
 Une énumération permet, pour une cellule, de savoir si elle attend d'être traité, si elle est en cours de traitement,si son traitement est terminé ou si elle est impacté par un virus ou une naissance. La structure _cellstat_ permet d'associer cet état à un client lorsqu'elle est en cour de traitement.
 
@@ -137,14 +137,14 @@ On ne traite en général pas une seule cellule à la fois, une dernière struct
 
 Le client ne contient pas de structure particulière, il se sert du fichier _jvie.h_ pour les calculs et du fichier _commande.h_ pour communiquer. Il dispose cependant d'états pour connaître son statut par rapport à son dialogue avec le serveur.
 
-`
+```
 typedef enum {
     DEMANDE,
     ENVOYE,
     RECU,
     REFU
 } etat_c;
-`
+```
 
 Ces différents états permettent de savoir si un calcul a été demandé, si il a été envoyé (donc calculé), si un nouveau calcul à été reçu ou bien si un refus du serveur pour quelconque raison a été reçu.
 
@@ -153,7 +153,7 @@ Ces différents états permettent de savoir si un calcul a été demandé, si il
 
 Le serveur doit à la fois gérer le plateau principal du jeu, le sac de taches et les clients. Pour les deux premiers, il inclus les fichiers _jvie.h_ et _jvieserv.h_. Pour gérer les clients il dispose d'un structure.
 
-`
+```
 typedef struct {
     SOCKET sock;
     int generation;
@@ -162,7 +162,7 @@ typedef struct {
     int width;
     int height;
 } Client;
-`
+```
 
 Le serveur range les clients dans un tableau. L'attribut _sock_ est un _socket_ qui permet de communiquer avec le client. L'attribut _generation_ permet de vérifier que le client n’envoie pas de données obsolètes. Le reste des attribut sont présent pour placer le résultat reçus au bon endroit dans le plateau de jeu.
 
@@ -225,7 +225,7 @@ Le coordinateur envoie une commande de type _virus_ et la cellule associé. L'as
 
 Le fichier _commande.h_ permet de communiquer avec le coordinateur et les assistants. Ce fichier définit toutes les requêtes de communications.
 
-`
+```
 typedef enum {
     CMD_START_COMMUNICATION = 1,
     CMD_REQUEST_TASK = 2,
@@ -286,7 +286,7 @@ typedef struct {
 	CmdVirus virus;
     };
 } Command;
-`
+```
 
 Observons tout d'abord la structure _Command_, c'est elle qui sert de "squelette" pour la communication de chaque taches ou commandes. Le premier attribut permet de définir le type de commande que l'on envoi ou que l'on reçois, ce type est lui même définit par une énumération _CommandType_. En fonction du type de la commande, on peut lire ou écrire dans l'un des champs de l'_union_ correspondant.
 * __CmdRequestTask__ : un assistant demande une tache au coordinateur.
